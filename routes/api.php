@@ -26,7 +26,7 @@ Route::post('/register', 'App\Http\Controllers\Auth\RegistrationController@store
 
 //Login Routes
 Route::post('/login', [AuthController::class, 'login'])->name('login');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('web');
+Route::get('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('web');
 
 // Forgot password route
 Route::post('password/forgot', [ForgotPasswordController::class, 'forgot'])->name('password.forgot');
