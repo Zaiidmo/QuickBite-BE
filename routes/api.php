@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -25,3 +27,9 @@ Route::post('/register', 'App\Http\Controllers\Auth\RegistrationController@store
 //Login Routes
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('web');
+
+// Forgot password route
+Route::post('password/forgot', [ForgotPasswordController::class, 'forgot'])->name('password.forgot');
+
+// Reset password route
+Route::post('password/reset', [ResetPasswordController::class, 'reset'])->name('password.reset');
