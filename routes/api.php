@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\RegistrationController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -20,13 +21,18 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::controller(AuthController::class)->group(function () {
+    Route::post('register', 'store');
+    Route::post('login', 'login');
+    Route::post('logout', 'logout');
+});
 //Registration Routes
 
-Route::post('/register', 'App\Http\Controllers\Auth\RegistrationController@store');
 
 //Login Routes
-Route::post('/login', [AuthController::class, 'login'])->name('login');
-Route::get('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('web');
+// Route::post('/login', [AuthController::class, 'login'])->name('login');
+// Route::get('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('web');
 
 // Forgot password route
 Route::post('password/forgot', [ForgotPasswordController::class, 'forgot'])->name('password.forgot');
