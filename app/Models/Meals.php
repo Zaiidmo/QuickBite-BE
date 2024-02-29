@@ -21,9 +21,9 @@ class Meals extends Model
     public function category() {
         return $this->belongsTo(Category::class);
     }
-    public function users()
+    public function orders()
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(Order::class);
     }
 }
 
