@@ -7,12 +7,14 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register']]);
+        $this->middleware('auth:api', ['except' => ['login', 'register', 'forgotPassword', 'resetPassword']]);
     }
     public function login(Request $request)
     {
@@ -22,11 +24,14 @@ class AuthController extends Controller
         ]);
         $credentials = $request->only('email', 'password');
         $token = Auth::attempt($credentials);
-        
+
         if (!$token) {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], 401);
+            return response()->json(
+                [
+                    'message' => 'Unauthorized',
+                ],
+                401,
+            );
         }
 
         $user = Auth::user();
@@ -35,7 +40,7 @@ class AuthController extends Controller
             'authorization' => [
                 'token' => $token,
                 'type' => 'bearer',
-            ]
+            ],
         ]);
     }
 
@@ -55,7 +60,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'User created successfully',
-            'user' => $user
+            'user' => $user,
         ]);
     }
 
@@ -74,8 +79,73 @@ class AuthController extends Controller
             'authorisation' => [
                 'token' => Auth::refresh(),
                 'type' => 'bearer',
-            ]
+            ],
+        ]);
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(
+                [
+                    'message' => 'User not found',
+                ],
+                404,
+            );
+        }
+
+        $token = JWTAuth::fromUser($user);
+
+        // Send reset password email or return token
+        Mail::raw("Reset password token: $token", function ($message) use ($user) {
+            $message->to($user->email)->subject('Reset Your Password');
+        });
+
+        return response()->json([
+            'message' => 'Reset password token sent to your email',
+            'token' => $token,
+        ]);
+    }
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'token' => 'required|string',
+            'password' => 'required|string|min:6',
+        ]);
+
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+        } catch (\Exception $e) {
+            return response()->json(
+                [
+                    'message' => 'Invalid or expired token',
+                ],
+                401,
+            );
+        }
+
+        if (!$user || $user->email !== $request->email) {
+            return response()->json(
+                [
+                    'message' => 'Invalid token or email',
+                ],
+                401,
+            );
+        }
+
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return response()->json([
+            'message' => 'Password reset successful',
         ]);
     }
 }
-
