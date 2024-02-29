@@ -9,7 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -22,8 +22,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'avatar',
-        'remember_token'
     ];
 
     /**
@@ -33,6 +31,7 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
+        'remember_token'
     ];
 
     /**
@@ -42,7 +41,6 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
     ];
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.
