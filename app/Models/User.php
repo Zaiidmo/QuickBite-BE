@@ -63,7 +63,7 @@ class User extends Authenticatable implements JWTSubject
     }
     public function roles()
     {
-        return $this->belongsToMany(Role::class);
+        return $this->belongsToMany(Role::class, 'users_roles', 'user_id', 'role_id');
     }
     public function restaurants()
     {
