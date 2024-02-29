@@ -57,6 +57,7 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
+        $user->roles()->attach(3); // assign user role of customer by default
 
         return response()->json([
             'message' => 'User created successfully',
