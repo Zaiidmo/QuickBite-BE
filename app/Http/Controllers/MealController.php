@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreMealsRequest;
-use App\Http\Requests\UpdateMealsRequest;
-use App\Models\Meals;
+use App\Http\Requests\StoreMealRequest;
+use App\Http\Requests\UpdateMealRequest;
+use App\Models\Meal;
 
-class MealsController extends Controller
+class MealController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -27,7 +27,7 @@ class MealsController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreMealsRequest $request)
+    public function store(StoreMealRequest $request)
     {
         //
     }
@@ -35,7 +35,7 @@ class MealsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Meals $meals)
+    public function show(Meal $meal)
     {
         //
     }
@@ -43,7 +43,7 @@ class MealsController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Meals $meals)
+    public function edit(Meal $meal)
     {
         //
     }
@@ -51,7 +51,7 @@ class MealsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateMealsRequest $request, Meals $meals)
+    public function update(UpdateMealRequest $request, Meal $meal)
     {
         //
     }
@@ -59,7 +59,7 @@ class MealsController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Meals $meals)
+    public function destroy(Meal $meal)
     {
         //
     }

@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Meals extends Model
+class Meal extends Model
 {
     use HasFactory;
     protected $fillable = [
@@ -26,4 +26,3 @@ class Meals extends Model
         return $this->belongsToMany(Order::class);
     }
 }
-
