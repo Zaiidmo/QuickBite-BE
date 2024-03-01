@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreRestaurantRequest;
 use App\Http\Requests\UpdateRestaurantRequest;
 use App\Models\Restaurant;
+use Illuminate\Support\Facades\Auth;
 
 class RestaurantController extends Controller
 {
@@ -29,9 +30,17 @@ class RestaurantController extends Controller
      */
     public function store(StoreRestaurantRequest $request)
     {
-        //
-    }
+        // Validate request data
+        $validated = $request->validated();
 
+        // Get the authenticated user's ID
+        $userId = Auth::id();
+
+        // Create restaurant with user_id from authenticated user and save it to the database
+        $restaurant = Restaurant::create(array_merge($validated, ['user_id' => $userId]));
+
+        return response()->json(['message' => 'Restaurant created successfully', 'restaurant' => $restaurant], 201);
+    }
     /**
      * Display the specified resource.
      */
