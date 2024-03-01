@@ -35,6 +35,9 @@ class RestaurantController extends Controller
 
         // Get the authenticated user's ID
         $userId = Auth::id();
+        if(Auth::user()->role !== 'Seller') {
+            return response()->json(['message' => 'You are not authorized to create a restaurant'], 403);
+        }
 
         // Create restaurant with user_id from authenticated user and save it to the database
         $restaurant = Restaurant::create(array_merge($validated, ['user_id' => $userId]));
