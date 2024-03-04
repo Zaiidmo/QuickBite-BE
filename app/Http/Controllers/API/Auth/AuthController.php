@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
@@ -83,70 +84,36 @@ class AuthController extends Controller
             ],
         ]);
     }
-
+    
     public function forgotPassword(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-        ]);
+        $request->validate(['email' => 'required|email']);
 
-        $user = User::where('email', $request->email)->first();
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
 
-        if (!$user) {
-            return response()->json(
-                [
-                    'message' => 'User not found',
-                ],
-                404,
-            );
-        }
-
-        $token = JWTAuth::fromUser($user);
-
-        // Send reset password email or return token
-        Mail::raw("Reset password token: $token", function ($message) use ($user) {
-            $message->to($user->email)->subject('Reset Your Password');
-        });
-
-        return response()->json([
-            'message' => 'Reset password token sent to your email',
-            'token' => $token,
-        ]);
+        return $status === Password::RESET_LINK_SENT
+                    ? response()->json(['message' => __($status)])
+                    : response()->json(['message' => __($status)], 400);
     }
     public function resetPassword(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
             'token' => 'required|string',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
-        try {
-            $user = JWTAuth::parseToken()->authenticate();
-        } catch (\Exception $e) {
-            return response()->json(
-                [
-                    'message' => 'Invalid or expired token',
-                ],
-                401,
-            );
-        }
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill(['password' => bcrypt($password)])->save();
+            }
+        );
 
-        if (!$user || $user->email !== $request->email) {
-            return response()->json(
-                [
-                    'message' => 'Invalid token or email',
-                ],
-                401,
-            );
-        }
-
-        $user->update([
-            'password' => Hash::make($request->password),
-        ]);
-
-        return response()->json([
-            'message' => 'Password reset successful',
-        ]);
+        return $status === Password::PASSWORD_RESET
+                    ? response()->json(['message' => __($status)])
+                    : response()->json(['message' => __($status)], 400);
     }
-}
+}     
