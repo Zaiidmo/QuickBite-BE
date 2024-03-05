@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\API\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Repositories\UserRepository;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegistrationRequest;
 use App\Repositories\UserRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,52 +15,33 @@ use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
+    protected $userRepository;
     public function __construct(UserRepositoryInterface $userRepository)
     {
         $this->userRepository = $userRepository;
         $this->middleware('auth:api', ['except' => ['login', 'register', 'forgotPassword', 'resetPassword']]);
     }
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
-        $credentials = $request->only('email', 'password');
-        $token = Auth::attempt($credentials);
+        $request->validated();
 
-        if (!$token) {
-            return response()->json(
-                [
-                    'message' => 'Unauthorized',
-                ],
-                401,
-            );
+        $credentials = $request->only('email', 'password');
+        $loginData = $this->userRepository->login($credentials);
+
+        if (!$loginData) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $user = Auth::user();
-        return response()->json([
-            'user' => $user,
-            'authorization' => [
-                'token' => $token,
-                'type' => 'bearer',
-            ],
-        ]);
+        return response()->json($loginData);
     }
 
-    public function register(Request $request)
+    public function register(RegistrationRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
-        ]);
+        $data = $request->validated();
+        $data['password'] = Hash::make($data['password']);
 
-        $user = $this->userRepository->create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        $user = $this->userRepository->create($data);
+
         $user->roles()->attach(3); // assign user role of customer by default
 
         return response()->json([
@@ -118,54 +99,50 @@ class AuthController extends Controller
     //     ]);
     // }
     // public function resetPassword(Request $request)
-//     {
-//         $request->validate([
-//             'email' => 'required|email',
-//             'token' => 'required|string',
-//             'password' => 'required|string|min:6',
-//         ]);
+    //     {
+    //         $request->validate([
+    //             'email' => 'required|email',
+    //             'token' => 'required|string',
+    //             'password' => 'required|string|min:6',
+    //         ]);
 
-//         try {
-//             $user = JWTAuth::parseToken()->authenticate();
-//         } catch (\Exception $e) {
-//             return response()->json(
-//                 [
-//                     'message' => 'Invalid or expired token',
-//                 ],
-//                 401,
-//             );
-//         }
+    //         try {
+    //             $user = JWTAuth::parseToken()->authenticate();
+    //         } catch (\Exception $e) {
+    //             return response()->json(
+    //                 [
+    //                     'message' => 'Invalid or expired token',
+    //                 ],
+    //                 401,
+    //             );
+    //         }
 
-//         if (!$user || $user->email !== $request->email) {
-//             return response()->json(
-//                 [
-//                     'message' => 'Invalid token or email',
-//                 ],
-//                 401,
-//             );
-//         }
+    //         if (!$user || $user->email !== $request->email) {
+    //             return response()->json(
+    //                 [
+    //                     'message' => 'Invalid token or email',
+    //                 ],
+    //                 401,
+    //             );
+    //         }
 
-//         $user->update([
-//             'password' => Hash::make($request->password),
-//         ]);
+    //         $user->update([
+    //             'password' => Hash::make($request->password),
+    //         ]);
 
-//         return response()->json([
-//             'message' => 'Password reset successful',
-//         ]);
-//     }
-// }
+    //         return response()->json([
+    //             'message' => 'Password reset successful',
+    //         ]);
+    //     }
+    // }
 
     public function forgotPassword(Request $request)
     {
         $request->validate(['email' => 'required|email']);
 
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        $status = Password::sendResetLink($request->only('email'));
 
-        return $status === Password::RESET_LINK_SENT
-                    ? response()->json(['message' => __($status)])
-                    : response()->json(['message' => __($status)], 400);
+        return $status === Password::RESET_LINK_SENT ? response()->json(['message' => __($status)]) : response()->json(['message' => __($status)], 400);
     }
     public function resetPassword(Request $request)
     {
@@ -175,15 +152,10 @@ class AuthController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, $password) {
-                $user->forceFill(['password' => bcrypt($password)])->save();
-            }
-        );
+        $status = Password::reset($request->only('email', 'password', 'password_confirmation', 'token'), function ($user, $password) {
+            $user->forceFill(['password' => bcrypt($password)])->save();
+        });
 
-        return $status === Password::PASSWORD_RESET
-                    ? response()->json(['message' => __($status)])
-                    : response()->json(['message' => __($status)], 400);
+        return $status === Password::PASSWORD_RESET ? response()->json(['message' => __($status)]) : response()->json(['message' => __($status)], 400);
     }
-}     
+}
